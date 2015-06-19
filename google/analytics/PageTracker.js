@@ -32,9 +32,33 @@ define(['require', 'js/core/Component', 'js/core/Base', 'js/core/History', 'flow
             "on:trackingInitialized"
         ],
 
-        _initializationComplete: function() {
+        _initializationComplete: function () {
 
             this.callBase();
+
+            var self = this,
+                url = (this.$stage.$document.location.protocol === 'https:' ? 'https://ssl' : 'http://www') +
+                    '.google-analytics.com/ga.js';
+
+            require([url], function () {
+                var gat = window['_gat'];
+
+                if (gat && gat._createTracker) {
+                    var pageTracker = gat._createTracker(self.$.account);
+                    if (pageTracker) {
+                        pageTracker._setDomainName(self.$.domain);
+
+                        if (self.$.siteSpeedSampleRate) {
+                            pageTracker._setSiteSpeedSampleRate && pageTracker._setSiteSpeedSampleRate(self.$.siteSpeedSampleRate);
+                        }
+
+                        self.$pageTracker = pageTracker;
+                        self.trigger("on:trackingInitialized");
+                        self._trackQueue();
+                    }
+                }
+
+            });
 
             var account = this.$.account;
 
@@ -77,28 +101,6 @@ define(['require', 'js/core/Component', 'js/core/Base', 'js/core/History', 'flow
                 }, this);
 
 
-                var url = (this.$stage.$document.location.protocol === 'https:' ? 'https://ssl' : 'http://www') +
-                    '.google-analytics.com/ga.js';
-
-                require([url], function () {
-                    var gat = window['_gat'];
-
-                    if (gat && gat._createTracker) {
-                        var pageTracker = gat._createTracker(self.$.account);
-                        if (pageTracker) {
-                            pageTracker._setDomainName(self.$.domain);
-
-                            if (self.$.siteSpeedSampleRate) {
-                                pageTracker._setSiteSpeedSampleRate && pageTracker._setSiteSpeedSampleRate(self.$.siteSpeedSampleRate);
-                            }
-
-                            self.$pageTracker = pageTracker;
-                            self.trigger("on:trackingInitialized");
-                            self._trackQueue();
-                        }
-                    }
-
-                });
             }
 
             this.callBase();
